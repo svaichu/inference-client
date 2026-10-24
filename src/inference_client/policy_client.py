@@ -90,6 +90,10 @@ class PolicyClient:
         self._init_socket()
 
     def _init_socket(self) -> None:
+        # Close any previous (possibly stuck) socket first: left open with the
+        # default infinite linger, it makes context.term() in close() hang forever.
+        if getattr(self, "socket", None) is not None:
+            self.socket.close(linger=0)
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.RCVTIMEO, self.timeout_ms)
         self.socket.setsockopt(zmq.SNDTIMEO, self.timeout_ms)

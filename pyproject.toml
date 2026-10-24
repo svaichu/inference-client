@@ -9,6 +9,8 @@ dependencies = [
     "msgpack-numpy>=0.4",
     "numpy>=1.26,<2",
     "pillow>=10",
+    "pandas>=2.3.3",
+    "pyarrow>=16,<23",  # 23+ requires numpy>=2, which conflicts with the numpy<2 pin above
 ]
 
 [project.optional-dependencies]
