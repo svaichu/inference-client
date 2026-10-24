@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Build / packaging
+build/
+dist/
+
+# Virtual envs
+.venv/
+.venv-*/
+venv/
+
+# Test / tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local-only config (norma-core path, host/token overrides, etc.)
+.env
+
+# Recorded datasets / replay inputs -- big binary files, fetch separately
+*.parquet
+*.mp4
+
+# Editors / OS
+.DS_Store

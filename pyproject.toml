@@ -1,0 +1,27 @@
+[project]
+name = "inference-client"
+version = "0.1.0"
+description = "Minimal robot-side bridge: norma-core Station <-> a remote GR00T ZMQ policy server"
+requires-python = ">=3.10"
+dependencies = [
+    "pyzmq>=26",
+    "msgpack>=1.0",
+    "msgpack-numpy>=0.4",
+    "numpy>=1.26,<2",
+    "pillow>=10",
+]
+
+[project.optional-dependencies]
+# Only needed to replay recorded .parquet datasets offline (no live robot/Station
+# required). Not needed to run the real bridge against hardware.
+offline = ["pyarrow>=16"]
+
+[project.scripts]
+inference-bridge = "inference_client.bridge:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
