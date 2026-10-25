@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--api-token", default=None)
 
     p.add_argument("--task", required=True, help="Language instruction the policy is conditioned on")
-    p.add_argument("--image-keys", default="cam0,cam1,cam2", help="Comma-separated, in Frame image order")
+    p.add_argument("--image-keys", default="cam0,cam1", help="Comma-separated, in Frame image order")
     p.add_argument("--state-key", default="state", help="Must match the checkpoint's modality config")
 
     p.add_argument("--offline", default=None, help="Replay this .parquet file instead of live hardware")

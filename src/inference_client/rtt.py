@@ -193,7 +193,7 @@ def main() -> None:
     p.add_argument("--api-token", default=None)
     p.add_argument("--timeout-ms", type=int, default=15000)
     p.add_argument("--task", default="measure rtt")
-    p.add_argument("--image-keys", default="cam0,cam1,cam2")
+    p.add_argument("--image-keys", default="cam0,cam1")
     p.add_argument("--state-key", default="state")
     p.add_argument("--offline", default=None, help="Take the first frame of this .parquet as the observation")
     p.add_argument("--image-size", default="480x640", help="HxW of synthetic images when no --offline")

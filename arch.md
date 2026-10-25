@@ -92,13 +92,9 @@ nonsensical, check this first.
 
 ## Open items (as of 2026-10-24)
 
-- No GR00T checkpoint trained for ElRobot's embodiment exists yet, as far as
-  this session found. `configs/finetune_stack_tact_v4.yaml` in
-  `finetune-groot` points at an HPC path not present on this box. Need
-  either a fine-tune on ElRobot data (collected via Station's
-  `dataset-generator`, converted for `robotdataset`) or to confirm one
-  exists elsewhere before `bridge.py --offline`/live mode can do anything
-  real.
+- A GR00T checkpoint for ElRobot now exists: `finetune-groot` `outputs/checkpoints/elrobot_pizza*`
+  (`new_embodiment`, 2 cameras `cam0,cam1`, 8 joints, ABSOLUTE `goal_norm` actions). Station may still
+  publish more than 2 images; only the first 2 are fed to the model (`--image-keys cam0,cam1`).
 - Tunnel between cloud server and local client (Tailscale / SSH reverse
   tunnel / ngrok) was discussed but not set up or decided in this session.
 - `src/inference_client/station_live.py` was written from reading
