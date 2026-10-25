@@ -111,7 +111,12 @@ class StationFrame:
                 task = cols["task"][i] if "task" in cols else None
                 yield cls(joints=joints, images=images, task=task)
 
-    def to_observation(self, image_keys: tuple[str, ...], state_key: str = "state") -> dict:
+    def to_observation(
+        self,
+        image_keys: tuple[str, ...],
+        state_key: str = "state",
+        image_indices: tuple[int, ...] | None = None,
+    ) -> dict:
         """Build the nested dict GR00T's ``Gr00tPolicy.get_action`` expects.
 
         Shapes (batch=1, time=1, per Gr00tPolicy.check_observation):
@@ -122,13 +127,22 @@ class StationFrame:
         Caller must ensure ``image_keys`` (and joint ordering) match the
         checkpoint's training config -- call ``policy.get_modality_config()``
         once to confirm, don't hardcode blindly.
+        ``image_indices`` maps each key to a ``Frame.images`` index; by default,
+        keys use images in sequential order.
         """
-        if len(self.images) < len(image_keys):
-            raise ValueError(f"Frame has {len(self.images)} images but {len(image_keys)} keys requested")
+        if image_indices is None:
+            image_indices = tuple(range(len(image_keys)))
+        if len(image_indices) != len(image_keys):
+            raise ValueError(f"Got {len(image_indices)} image indices for {len(image_keys)} keys")
+        if any(index < 0 or index >= len(self.images) for index in image_indices):
+            raise ValueError(f"Image indices {image_indices} are invalid for a frame with {len(self.images)} images")
         if self.task is None:
             raise ValueError("StationFrame.task is required to build an observation (pass --task)")
 
-        video = {key: self.images[i].decode()[None, None, ...] for i, key in enumerate(image_keys)}
+        video = {
+            key: self.images[index].decode()[None, None, ...]
+            for key, index in zip(image_keys, image_indices)
+        }
         state = {
             state_key: np.array([[[j.position_norm for j in self.joints]]], dtype=np.float32)
         }
