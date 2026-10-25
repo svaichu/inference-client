@@ -21,6 +21,7 @@ offline = ["pyarrow>=16"]
 [project.scripts]
 inference-bridge = "inference_client.bridge:main"
 inference-rtt = "inference_client.rtt:main"
+inference-aspire = "inference_client.aspire_bridge:main"
 
 [build-system]
 requires = ["setuptools>=64"]
