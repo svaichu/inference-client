@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--api-token", default=None)
 
     p.add_argument("--task", required=True, help="Language instruction the policy is conditioned on")
-    p.add_argument("--image-keys", default="cam0,cam1", help="Comma-separated, in Frame image order")
+    p.add_argument("--image-keys", default="cam0,cam1,cam2", help="Comma-separated, in Frame image order")
     p.add_argument("--state-key", default="state", help="Must match the checkpoint's modality config")
 
     p.add_argument("--offline", default=None, help="Replay this .parquet file instead of live hardware")
@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         help="Path to a norma-core checkout (or set NORMA_CORE_PATH). Required for live mode.",
     )
     p.add_argument("--bus-serial", default=None, help="ST3215 bus id, from the station web viewer")
-    p.add_argument("--motor-ids", default="1,2,3,4,5,6")
+    p.add_argument("--motor-ids", default="1,2,3,4,5,6,7,8")
     p.add_argument("--timeout", type=float, default=5.0)
     p.add_argument(
         "--max-delta-ticks", type=int, default=200,
