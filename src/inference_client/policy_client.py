@@ -1,66 +1,64 @@
 """Standalone ZMQ client for a GR00T policy server.
 
 Lifted from ``vendor/Isaac-GR00T/gr00t/policy/server_client.py`` (NVIDIA,
-Apache-2.0) — same wire protocol, msgpack_numpy framing, and
-``allow_pickle=False`` refusal. The original class can't be imported in
-isolation: ``gr00t.policy.__init__`` eagerly imports ``Gr00tPolicy``, which
-imports torch and transformers at module scope, just to get a plain ZMQ
-client. This file has none of that: only ``pyzmq``, ``msgpack``,
-``msgpack-numpy``, and ``numpy``.
+Apache-2.0) — same wire protocol: msgpack, with ndarrays framed as
+``{"__ndarray_class__": True, "as_npy": <np.save bytes>}`` and loaded with
+``allow_pickle=False``. (Not msgpack_numpy: the server only decodes its own
+``__ndarray_class__`` framing, and passes anything else through as a dict.)
+The original class can't be imported in isolation: ``gr00t.policy.__init__``
+eagerly imports ``Gr00tPolicy``, which imports torch and transformers at
+module scope, just to get a plain ZMQ client. This file has none of that:
+only ``pyzmq``, ``msgpack``, and ``numpy``.
 
 Dropped relative to the original: the ``BasePolicy`` ABC plumbing (strict
-validation, ``ModalityConfig`` round-tripping) — this client is meant to call
+validation, ``ModalityConfig`` round-tripping — a ``ModalityConfig`` from the
+server comes back as its plain JSON dict) — this client is meant to call
 exactly one endpoint (``get_action``), fetch ``get_modality_config`` once at
 startup, and otherwise stay out of the way.
 """
 
 from __future__ import annotations
 
-import functools
 import io
 from typing import Any
 
 import msgpack
-import msgpack_numpy as mnp
 import numpy as np
 import zmq
 
 
 class MsgSerializer:
-    """msgpack_numpy wire format with a hard ``allow_pickle=False`` boundary.
+    """The server's own wire format (``gr00t.policy.server_client.MsgSerializer``).
 
-    msgpack_numpy's encode/decode hooks route object-dtype ndarrays through
-    ``pickle`` before any user hook can intervene; the checks below run
-    first and refuse that path, matching the server's own guard.
+    ``np.save`` / ``np.load`` run with ``allow_pickle=False``, so object-dtype
+    ndarrays are refused in both directions, matching the server's guard.
     """
 
     @staticmethod
     def to_bytes(data: Any) -> bytes:
-        default = functools.partial(MsgSerializer._safe_encode, chain=mnp.encode)
-        return msgpack.packb(data, default=default)
+        return msgpack.packb(data, default=MsgSerializer.encode_custom_classes)
 
     @staticmethod
     def from_bytes(data: bytes) -> Any:
-        object_hook = functools.partial(MsgSerializer._safe_decode, chain=mnp.decode)
-        return msgpack.unpackb(data, object_hook=object_hook, raw=False)
+        return msgpack.unpackb(data, object_hook=MsgSerializer.decode_custom_classes)
 
     @staticmethod
-    def _safe_encode(obj, chain=None):
-        if isinstance(obj, np.ndarray) and obj.dtype.kind == "O":
-            raise TypeError(
-                f"Refusing to encode object-dtype ndarray (shape={obj.shape}); "
-                f"convert to a concrete numeric dtype before sending."
-            )
-        return mnp.encode(obj, chain=chain)
+    def decode_custom_classes(obj):
+        if not isinstance(obj, dict):
+            return obj
+        if "__ModalityConfig_class__" in obj:
+            return obj["as_json"]
+        if "__ndarray_class__" in obj:
+            return np.load(io.BytesIO(obj["as_npy"]), allow_pickle=False)
+        return obj
 
     @staticmethod
-    def _safe_decode(obj, chain=None):
-        if isinstance(obj, dict):
-            nd_val = obj.get(b"nd", obj.get("nd"))
-            kind_val = obj.get(b"kind", obj.get("kind"))
-            if nd_val and kind_val in (b"O", "O"):
-                raise ValueError("Refusing to decode object-dtype ndarray payload (pickle-bearing).")
-        return mnp.decode(obj, chain=chain)
+    def encode_custom_classes(obj):
+        if isinstance(obj, np.ndarray):
+            output = io.BytesIO()
+            np.save(output, obj, allow_pickle=False)
+            return {"__ndarray_class__": True, "as_npy": output.getvalue()}
+        return obj
 
 
 class PolicyClient:
